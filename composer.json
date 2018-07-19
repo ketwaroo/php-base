@@ -1,0 +1,27 @@
+{
+    "name": "ketwaroo/php-base",
+    "type": "package",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Yaasir Ketwaroo",
+            "email": "ketwaroo.yaasir at gmail"
+        }
+    ],
+    "require": {
+    },
+    "require-dev": {
+        "ketwaroo/debug-helper": "dev-master"
+    },
+    "autoload": {
+        "psr-4": {
+            "Ketwaroo\\": "src/Ketwaroo/"
+        }
+    },
+    "repositories": [
+        {
+            "type": "composer",
+            "url": "http://satis.ketwaroo.com"
+        }
+    ]
+}
