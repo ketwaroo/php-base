@@ -22,12 +22,12 @@ class File extends \SplFileObject
 
     public function setContents($data, $length = null)
     {
-        $this->fwrite($str, $length);
+        $this->fwrite($data, $length);
         return $this;
     }
     public function setContentsAppend($data, $length = null)
     {
-        $this->fwrite($str, $length);
+        $this->fwrite($data, $length);
         return $this;
     }
     
