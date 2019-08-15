@@ -32,6 +32,14 @@ class FileSystem
         return str_replace(array_keys($r), array_values($r), $path);
     }
 
+    /**
+     * 
+     * @param type $path
+     * @param type $filter
+     * @param type $r
+     * @param type $filterType
+     * @return array
+     */
     public static function readFiles($path, $filter = NULL, $r = true, $filterType = FileSystem::FILTER_GLOB)
     {
         switch ($filterType)
@@ -195,7 +203,7 @@ class FileSystem
         
     }
 
-    function moveMultipleFiles()
+    function moveMultipleFiles($from, $filter)
     {
         $list = rd($from, $filter);
         foreach ($list as $tmp)
