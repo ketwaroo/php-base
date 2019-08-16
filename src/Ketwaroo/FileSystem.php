@@ -26,14 +26,28 @@ class FileSystem {
         return str_replace(array_keys($r), array_values($r), $path);
     }
 
+    /**
+     * 
+     * @link https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+     * @param string $filename
+     * @param string $invalidCharReplacer
+     * @return string
+     */
     public static function sanitiseWindowsFileName($filename, $invalidCharReplacer = '-') {
         $rep = [
             '~[' . preg_quote('<>"/\\|?*:') . ']+~' => $invalidCharReplacer,
-            '~[:^print:]+~' => $invalidCharReplacer,
+            '~[[:^print:]]+~' => $invalidCharReplacer,
         ];
         return preg_replace(array_keys($rep), array_values($rep), $filename);
     }
 
+    /**
+     * 
+     * @link https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
+     * @param string $filename
+     * @param string $invalidCharReplacer
+     * @return string
+     */
     public static function sanitiseWindowsDirectoryName($filename, $invalidCharReplacer = '-') {
         $rep = [
             '~[\.,]+$~' => '',
@@ -190,15 +204,27 @@ class FileSystem {
 
      */
 
-    public static function moveFilesRegex($from, $to, $filter = '/.*/') {
-        
-    }
-
-    function moveMultipleFiles($from, $filter) {
-        $list = rd($from, $filter);
+    public static function moveFilesRegex($from, $to, $filter = '/.*/', $recurse = true, $deleteEmpty = false) {
+        $list = static::readDirectoriesInDirectoryRegex($from, $filter, $recurse);
         foreach ($list as $tmp) {
             $tmp2 = static::strFromTo($from, $to, $tmp);
             static::moveFile($tmp, $tmp2);
+        }
+        
+        if($deleteEmpty){
+            static::deleteEmptySubDirectories($from);
+        }
+    }
+
+    public function moveFilesGlob($from, $to, $filter='*', $recurse = true, $deleteEmpty = false) {
+        $list = static::readDirectoriesInDirectoryGlob($from, $filter, $recurse);
+        foreach ($list as $tmp) {
+            $tmp2 = static::strFromTo($from, $to, $tmp);
+            static::moveFile($tmp, $tmp2);
+        }
+        
+        if($deleteEmpty){
+            static::deleteEmptySubDirectories($from);
         }
     }
 
@@ -259,19 +285,13 @@ class FileSystem {
         }
     }
 
-    /*
-      Function: movefile
-
-      moves a file
-
-      Arguments:
-
-      $from	-	destination
-      $to		-	target
-
+    /**
+     * 
+     * @param type $from
+     * @param type $to
+     * @return type
      */
-
-    function movefile($from, $to) {
+    public static function movefile($from, $to) {
         if (!is_file($from))
             return;
         $dir = dirname($to);
@@ -397,21 +417,7 @@ class FileSystem {
     }
 
     public static function escapeGlobPath($path) {
-        return str_replace([
-            '[',
-            ']',
-            '(',
-            ')',
-            '-',
-                ],
-                [
-                    '\[',
-                    '\]',
-                    '\(',
-                    '\)',
-                    '\-',
-                ],
-                $path);
+        return preg_replace('~([\*\?\[\]\-\! ])~','\\\$1', $path);
     }
 
 }
