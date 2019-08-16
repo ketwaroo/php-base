@@ -205,25 +205,26 @@ class FileSystem {
      */
 
     public static function moveFilesRegex($from, $to, $filter = '/.*/', $recurse = true, $deleteEmpty = false) {
-        $list = static::readDirectoriesInDirectoryRegex($from, $filter, $recurse);
+        $list = static::readFilesInDirectoryRegex($from, $filter, $recurse);
         foreach ($list as $tmp) {
             $tmp2 = static::strFromTo($from, $to, $tmp);
             static::moveFile($tmp, $tmp2);
         }
-        
-        if($deleteEmpty){
+
+        if ($deleteEmpty) {
             static::deleteEmptySubDirectories($from);
+            @unlink($from);
         }
     }
 
-    public function moveFilesGlob($from, $to, $filter='*', $recurse = true, $deleteEmpty = false) {
-        $list = static::readDirectoriesInDirectoryGlob($from, $filter, $recurse);
+    public function moveFilesGlob($from, $to, $filter = '*', $recurse = true, $deleteEmpty = false) {
+        $list = static::readFilesInDirectoryGlob($from, $filter, $recurse);
         foreach ($list as $tmp) {
             $tmp2 = static::strFromTo($from, $to, $tmp);
             static::moveFile($tmp, $tmp2);
         }
-        
-        if($deleteEmpty){
+
+        if ($deleteEmpty) {
             static::deleteEmptySubDirectories($from);
         }
     }
@@ -260,21 +261,32 @@ class FileSystem {
     public static function deleteEmptySubDirectories($from, $verbose = false) {
         $list = static::readDirectoriesInDirectoryGlob($from);
         rsort($list);
-
+        $numDirs = count($list);
         while ($v = array_pop($list)) {
 
-            if (empty(static::readFilesInDirectoryGlob($v)) && is_dir($v) && rmdir($v) && $verbose) {
-                echo 'removed ', $v, PHP_EOL;
+            if (empty(static::readFilesInDirectoryGlob($v)) && is_dir($v) && rmdir($v)) {
+                if ($verbose) {
+                    echo 'removed ', $v, PHP_EOL;
+                }
+                $numDirs--;
             }
         }
+        return empty($numDirs);
     }
 
+    /**
+     * Delete all files and directories including itself
+     * @param string $d
+     */
     public static function deleteDirectory($d) {
         $c = static::readFilesInDirectoryRegex($d);
         foreach ($c as $i) {
             unlink($i);
         }
-        static::deleteEmptySubDirectories($d);
+        if (static::deleteEmptySubDirectories($d)) {
+            rmdir($d);
+        } else
+            trigger_error("$d seems to contain non empty folders or something", E_USER_WARNING);
     }
 
     function array2file($a, $f) {
@@ -417,7 +429,7 @@ class FileSystem {
     }
 
     public static function escapeGlobPath($path) {
-        return preg_replace('~([\*\?\[\]\-\! ])~','\\\$1', $path);
+        return preg_replace('~([\*\?\[\]\-\! ])~', '\\\$1', $path);
     }
 
 }
