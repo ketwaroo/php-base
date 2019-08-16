@@ -1,35 +1,44 @@
 <?php
 
-/*
- * To change this license header, choose License Headers in Project Properties.
- * To change this template file, choose Tools | Templates
- * and open the template in the editor.
- */
-
 namespace Ketwaroo;
+
+use Ketwaroo\Text;
 
 /**
  * Description of FileSystem
  *
- * @author Yaasir Ketwaroo<yaasir@ketwaroo.com>
+ * @author Yaasir Ketwaroo
  */
-class FileSystem
-{
+class FileSystem {
 
-    const FILTER_REGEX         = 0;
+    const FILTER_REGEX = 0;
     const FILTER_REGEX_DEFAULT = '~^.*$~';
-    const FILTER_GLOB          = 1;
-    const FILTER_GLOB_DEFAULT  = '*';
+    const FILTER_GLOB = 1;
+    const FILTER_GLOB_DEFAULT = '*';
 
-    public static function osPath($path)
-    {
+    public static function osPath($path) {
 
         $r = [
-            '/'  => DIRECTORY_SEPARATOR,
+            '/' => DIRECTORY_SEPARATOR,
             '\\' => DIRECTORY_SEPARATOR,
-            '?'  => '\?',
+            '?' => '\?',
         ];
         return str_replace(array_keys($r), array_values($r), $path);
+    }
+
+    public static function sanitiseWindowsFileName($filename, $invalidCharReplacer = '-') {
+        $rep = [
+            '~[' . preg_quote('<>"/\\|?*:') . ']+~' => $invalidCharReplacer,
+            '~[:^print:]+~' => $invalidCharReplacer,
+        ];
+        return preg_replace(array_keys($rep), array_values($rep), $filename);
+    }
+
+    public static function sanitiseWindowsDirectoryName($filename, $invalidCharReplacer = '-') {
+        $rep = [
+            '~[\.,]+$~' => '',
+        ];
+        return preg_replace(array_keys($rep), array_values($rep), static::sanitiseWindowsFileName($filename, $invalidCharReplacer));
     }
 
     /**
@@ -40,10 +49,8 @@ class FileSystem
      * @param type $filterType
      * @return array
      */
-    public static function readFiles($path, $filter = NULL, $r = true, $filterType = FileSystem::FILTER_GLOB)
-    {
-        switch ($filterType)
-        {
+    public static function readFiles($path, $filter = NULL, $r = true, $filterType = FileSystem::FILTER_GLOB) {
+        switch ($filterType) {
             case static::FILTER_REGEX:
                 return static::readFilesInDirectoryRegex($path, $filter, $r);
             case static::FILTER_GLOB:
@@ -61,25 +68,19 @@ class FileSystem
      * @param boolean|int $r if true fully recursive, integer is folders deep to go
      * @return array list of files
      */
-    public static function readFilesInDirectoryRegex($path, $filter = NULL, $r = true)
-    {
-        $dls    = array();
+    public static function readFilesInDirectoryRegex($path, $filter = NULL, $r = true) {
+        $dls = array();
         $subdir = array();
 
-        if (FALSE !== ($d = opendir($path)))
-        {
-            while (false !== ($f = readdir($d)))
-            {
-                if ($f != "." && $f != "..")
-                {
-                    if (is_dir($path . '/' . $f) && !empty($r))
-                    {
+        if (FALSE !== ($d = opendir($path))) {
+            while (false !== ($f = readdir($d))) {
+                if ($f != "." && $f != "..") {
+                    if (is_dir($path . '/' . $f) && !empty($r)) {
                         if ($r && is_int($r))
                             --$r;
 
                         $subdir = array_merge(static::readFilesInDirectoryRegex($path . '/' . $f, $filter, $r), $subdir);
-                    }
-                    elseif (NULL === $filter || preg_match($filter, $f))
+                    } elseif (NULL === $filter || preg_match($filter, $f))
                         array_push($dls, $path . '/' . $f);
                 }
             }
@@ -99,22 +100,18 @@ class FileSystem
      * @param boolean|int $r if true fully recursive, integer is folders deep to go
      * @return array list of files
      */
-    public static function readFilesInDirectoryGlob($path, $filter = NULL, $r = true)
-    {
+    public static function readFilesInDirectoryGlob($path, $filter = NULL, $r = true) {
         $filter = (NULL === $filter) ? static::FILTER_GLOB_DEFAULT : $filter;
         $path = static::escapeGlobPath($path);
-         $dirs  = glob($path . '/*', GLOB_ONLYDIR);
+        $dirs = glob($path . '/*', GLOB_ONLYDIR);
         $files = array_diff(glob($path . '/' . $filter, GLOB_BRACE), $dirs);
 
-        if (!empty($r))
-        {
-            if ($r && is_int($r))
-            {
+        if (!empty($r)) {
+            if ($r && is_int($r)) {
                 --$r;
             }
 
-            foreach ($dirs as $d)
-            {
+            foreach ($dirs as $d) {
                 $files = array_merge($files, static::readFilesInDirectoryGlob($d, $filter, $r));
             }
         }
@@ -129,20 +126,18 @@ class FileSystem
      * @param boolean $recurse
      * @return array
      */
-    public static function readDirectoriesInDirectoryGlob($path, $filter = '*', $recurse = true)
-    {
+    public static function readDirectoriesInDirectoryGlob($path, $filter = '*', $recurse = true) {
         $path = static::escapeGlobPath($path);
-    
+
         $dirs = glob($path . '/' . $filter, GLOB_BRACE | GLOB_ONLYDIR);
 
-        if (!empty($recurse))
-        {
+        if (!empty($recurse)) {
             if ($recurse && is_int($recurse))
                 --$recurse;
 
             $subdirs = glob($path . '/*', GLOB_ONLYDIR); //*/
             foreach ($subdirs as $d)
-                $dirs    = array_merge($dirs, static::readDirectoriesInDirectoryGlob($d, $filter, $recurse));
+                $dirs = array_merge($dirs, static::readDirectoriesInDirectoryGlob($d, $filter, $recurse));
         }
 
         return $dirs;
@@ -155,22 +150,19 @@ class FileSystem
      * @param type $r
      * @return array
      */
-    public static function readDirectoriesInDirectoryRegex($path, $filter = '/.*/', $r = true)
-    {
-        $dls    = array();
+    public static function readDirectoriesInDirectoryRegex($path, $filter = '/.*/', $r = true) {
+        $dls = array();
         $subdir = array();
         if ($r === 0)
             return array();
         if (is_numeric($r))
-            $r      = intval($r) - 1;
+            $r = intval($r) - 1;
 
 
-        if ($d = opendir($path))
-        {
+        if ($d = opendir($path)) {
             while (false !== ($f = readdir($d)))
                 if ($f != "." && $f != "..")
-                    if (is_dir($path . '/' . $f))
-                    {
+                    if (is_dir($path . '/' . $f)) {
                         if (preg_match($filter, $f))
                             array_push($dls, $path . '/' . $f);
 
@@ -198,37 +190,30 @@ class FileSystem
 
      */
 
-    public static function moveFilesRegex($from, $to, $filter = '/.*/')
-    {
+    public static function moveFilesRegex($from, $to, $filter = '/.*/') {
         
     }
 
-    function moveMultipleFiles($from, $filter)
-    {
+    function moveMultipleFiles($from, $filter) {
         $list = rd($from, $filter);
-        foreach ($list as $tmp)
-        {
+        foreach ($list as $tmp) {
             $tmp2 = static::strFromTo($from, $to, $tmp);
             static::moveFile($tmp, $tmp2);
         }
     }
 
-    function copy2($from, $to, $filter = '/.*/', $verbose = false)
-    {
+    function copy2($from, $to, $filter = '/.*/', $verbose = false) {
         $list = rd($from, $filter);
-        foreach ($list as $tmp)
-        {
+        foreach ($list as $tmp) {
             $tmp2 = str_fromto($from, $to, $tmp);
             if (copyfile($tmp, $tmp2) && $verbose)
                 echo 'copied ', $tmp, "\n";
         }
     }
 
-    function copyskip($from, $to, $filter = '/.*/')
-    {
+    function copyskip($from, $to, $filter = '/.*/') {
         $list = rd($from, $filter);
-        foreach ($list as $tmp)
-        {
+        foreach ($list as $tmp) {
             $tmp2 = str_fromto($from, $to, $tmp);
             if (!file_exists($tmp2) && copyfile($tmp, $tmp2))
                 echo 'copied ', $tmp, "\n";
@@ -242,43 +227,32 @@ class FileSystem
      * @param string $path actual path
      * @return string
      */
-    public static function strFromTo($from, $to, $path)
-    {
+    public static function strFromTo($from, $to, $path) {
         return preg_replace('~^' . preg_quote($from, '~') . '~i', $to, $path);
     }
 
-    public static function deleteEmptySubDirectories($from, $verbose = false)
-    {
+    public static function deleteEmptySubDirectories($from, $verbose = false) {
         $list = static::readDirectoriesInDirectoryGlob($from);
         rsort($list);
 
-        while ($v = array_pop($list))
-        {
+        while ($v = array_pop($list)) {
 
-            if (empty(static::readFilesInDirectoryGlob($v))
-                    && is_dir($v)
-                            && rmdir($v)
-                                    && $verbose)
-            {
+            if (empty(static::readFilesInDirectoryGlob($v)) && is_dir($v) && rmdir($v) && $verbose) {
                 echo 'removed ', $v, PHP_EOL;
             }
         }
     }
 
-    public static function deleteDirectory($d)
-    {
+    public static function deleteDirectory($d) {
         $c = static::readFilesInDirectoryRegex($d);
-        foreach ($c as $i)
-        {
+        foreach ($c as $i) {
             unlink($i);
         }
         static::deleteEmptySubDirectories($d);
     }
 
-    function array2file($a, $f)
-    {
-        foreach ($a as $l)
-        {
+    function array2file($a, $f) {
+        foreach ($a as $l) {
             $l = trim($l);
             if (!empty($l))
                 file_put_contents($f, $l . "\n", FILE_APPEND);
@@ -297,8 +271,7 @@ class FileSystem
 
      */
 
-    function movefile($from, $to)
-    {
+    function movefile($from, $to) {
         if (!is_file($from))
             return;
         $dir = dirname($to);
@@ -314,8 +287,7 @@ class FileSystem
      * @param string $to
      * @return boolean
      */
-    function copyfile($from, $to)
-    {
+    function copyfile($from, $to) {
         if (!is_file($from))
             return;
         $dir = dirname($to);
@@ -336,8 +308,7 @@ class FileSystem
      * @param string $path
      * @return string
      */
-    public static function unixifyPath($path)
-    {
+    public static function unixifyPath($path) {
         return preg_replace('~[\\\/]+~', '/', $path);
     }
 
@@ -350,25 +321,21 @@ class FileSystem
      * @param string $default fallback mime if can't be determined. default: application/octet-stream
      * @return type
      */
-    public static function determineMime($file, $default = 'application/octet-stream')
-    {
+    public static function determineMime($file, $default = 'application/octet-stream') {
 
         $basePath = Package::detectPackageBasePath(Package::inWhichPackageAmI(__FILE__));
 
-        if (is_file($file) && function_exists('finfo_open')) // recommended way.
-        {
+        if (is_file($file) && function_exists('finfo_open')) { // recommended way.
             $finfo = finfo_open(FILEINFO_MIME_TYPE); // return mime type a la mimetype extension
-            $mime  = finfo_file($finfo, $file);
+            $mime = finfo_file($finfo, $file);
             finfo_close($finfo);
         }
 //        elseif(is_file($file) && function_exists('mime_content_type')) // deprecated way
 //        {
 //            $mime = @mime_content_type($file);
 //        }
-        else // scraping the barrel. Also works if file does not exist.
-        { //@todo this method may be more accurate than fileinfo.
-            if (empty(self::$extMimeMap))
-            {
+        else { // scraping the barrel. Also works if file does not exist. //@todo this method may be more accurate than fileinfo.
+            if (empty(self::$extMimeMap)) {
                 self::$extMimeMap = require($basePath . '/data/mime_by_extension.php');
             }
 
@@ -383,41 +350,33 @@ class FileSystem
      * updates /data/mime-types with data from http://svn.apache.org/viewvc/httpd/httpd/trunk/docs/conf/mime.types?view=co
      * @author Yaasir Ketwaroo <ketwaroo@3cisd.com>
      */
-    public static function refreshMimeMap()
-    {
+    public static function refreshMimeMap() {
         $basePath = Package::detectPackageBasePath(Package::inWhichPackageAmI(__FILE__));
 
-        $src     = 'http://svn.apache.org/viewvc/httpd/httpd/trunk/docs/conf/mime.types?view=co';
+        $src = 'http://svn.apache.org/viewvc/httpd/httpd/trunk/docs/conf/mime.types?view=co';
         $outfile = $basePath . '/data/mime_by_extension.php';
 
         $raw = explode("\n", file_get_contents($src));
 
-        $out   = array();
+        $out = array();
         $count = array();
 
-        foreach ($raw as $r)
-        {
+        foreach ($raw as $r) {
             $r = trim($r);
-            if (substr($r, 0, 1) === '#' || empty($r))
-            {
+            if (substr($r, 0, 1) === '#' || empty($r)) {
                 continue;
             }
 
             $a = preg_split('~\t+~', $r);
 
-            if (!empty($a[1]))
-            {
+            if (!empty($a[1])) {
                 $exts = explode(' ', $a[1]);
                 $mime = trim($a[0]);
-                foreach ($exts as $e)
-                {
-                    if (isset($out[$e]))
-                    {
+                foreach ($exts as $e) {
+                    if (isset($out[$e])) {
                         $out[$e][] = $mime;
                         $count[$e] ++;
-                    }
-                    else
-                    {
+                    } else {
                         $out[$e] = array(
                             $mime,
                         );
@@ -436,16 +395,21 @@ class FileSystem
 
         file_put_contents($outfile, $outFileContent);
     }
-    
-    public static function escapeGlobPath($path)
-    {
+
+    public static function escapeGlobPath($path) {
         return str_replace([
             '[',
             ']',
-        ],
+            '(',
+            ')',
+            '-',
+                ],
                 [
                     '\[',
                     '\]',
+                    '\(',
+                    '\)',
+                    '\-',
                 ],
                 $path);
     }
