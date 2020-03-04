@@ -26,6 +26,11 @@ class FileSystem {
         return str_replace(array_keys($r), array_values($r), $path);
     }
 
+    public static function nixPath($path) {
+
+        return str_replace(DIRECTORY_SEPARATOR, '/', static::osPath($path));
+    }
+
     /**
      * 
      * @link https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
@@ -79,23 +84,49 @@ class FileSystem {
      * 
      * @param string $path bast path
      * @param string $filter regex
-     * @param boolean|int $r if true fully recursive, integer is folders deep to go
+     * @param boolean|int $recursive if true fully recursive, integer is folders deep to go
      * @return array list of files
      */
-    public static function readFilesInDirectoryRegex($path, $filter = NULL, $r = true) {
+    public static function readFilesInDirectoryRegex($path, $filter = NULL, $recursive = true) {
+
+//
+//        $directory = empty($recursive) ? (new \DirectoryIterator($path)) : ( new \RecursiveDirectoryIterator($path));
+//        
+//        if(is_int($recursive))
+//        {
+//            
+//        }
+//
+//
+//
+//        if (!empty($filter)) {
+//            $it = new \RecursiveIteratorIterator($directory);
+//            $files = new \RegexIterator($it, '/^.+\.php$/i', RecursiveRegexIterator::GET_MATCH);
+//        } else {
+//            $files = $directory;
+//        }
+//
+//
+//
+//        $fs = [];
+//        foreach ($files as $f) {
+//            $fs[] = $f;
+//        }
+//        sort($fs);
+//        return $fs;
+
         $dls = array();
         $subdir = array();
 
         if (FALSE !== ($d = opendir($path))) {
             while (false !== ($f = readdir($d))) {
                 if ($f != "." && $f != "..") {
-                    if (is_dir($path . '/' . $f) && !empty($r)) {
-                        if ($r && is_int($r))
-                            --$r;
+                    if (is_dir($path . '/' . $f) && !empty($recursive)) {
+                        if ($recursive && is_int($recursive)) --$recursive;
 
-                        $subdir = array_merge(static::readFilesInDirectoryRegex($path . '/' . $f, $filter, $r), $subdir);
+                        $subdir = array_merge(static::readFilesInDirectoryRegex($path . '/' . $f, $filter, $recursive), $subdir);
                     } elseif (NULL === $filter || preg_match($filter, $f))
-                        array_push($dls, $path . '/' . $f);
+                            array_push($dls, $path . '/' . $f);
                 }
             }
 
@@ -146,8 +177,7 @@ class FileSystem {
         $dirs = glob($path . '/' . $filter, GLOB_BRACE | GLOB_ONLYDIR);
 
         if (!empty($recurse)) {
-            if ($recurse && is_int($recurse))
-                --$recurse;
+            if ($recurse && is_int($recurse)) --$recurse;
 
             $subdirs = glob($path . '/*', GLOB_ONLYDIR); //*/
             foreach ($subdirs as $d)
@@ -167,21 +197,19 @@ class FileSystem {
     public static function readDirectoriesInDirectoryRegex($path, $filter = '/.*/', $r = true) {
         $dls = array();
         $subdir = array();
-        if ($r === 0)
-            return array();
-        if (is_numeric($r))
-            $r = intval($r) - 1;
+        if ($r === 0) return array();
+        if (is_numeric($r)) $r = intval($r) - 1;
 
 
         if ($d = opendir($path)) {
             while (false !== ($f = readdir($d)))
                 if ($f != "." && $f != "..")
-                    if (is_dir($path . '/' . $f)) {
+                        if (is_dir($path . '/' . $f)) {
                         if (preg_match($filter, $f))
-                            array_push($dls, $path . '/' . $f);
+                                array_push($dls, $path . '/' . $f);
 
                         if ($r)
-                            $subdir = array_merge(static::readDirectoriesInDirectoryRegex($path . '/' . $f, $filter, $r), $subdir);
+                                $subdir = array_merge(static::readDirectoriesInDirectoryRegex($path . '/' . $f, $filter, $r), $subdir);
                     }
 
             closedir($d);
@@ -233,8 +261,7 @@ class FileSystem {
         $list = rd($from, $filter);
         foreach ($list as $tmp) {
             $tmp2 = str_fromto($from, $to, $tmp);
-            if (copyfile($tmp, $tmp2) && $verbose)
-                echo 'copied ', $tmp, "\n";
+            if (copyfile($tmp, $tmp2) && $verbose) echo 'copied ', $tmp, "\n";
         }
     }
 
@@ -243,7 +270,7 @@ class FileSystem {
         foreach ($list as $tmp) {
             $tmp2 = str_fromto($from, $to, $tmp);
             if (!file_exists($tmp2) && copyfile($tmp, $tmp2))
-                echo 'copied ', $tmp, "\n";
+                    echo 'copied ', $tmp, "\n";
         }
     }
 
@@ -259,12 +286,12 @@ class FileSystem {
     }
 
     public static function deleteEmptySubDirectories($from, $verbose = false) {
-        $list = static::readDirectoriesInDirectoryGlob($from);
+        $list = static::readDirectoriesInDirectoryRegex($from);
         rsort($list);
         $numDirs = count($list);
         while ($v = array_pop($list)) {
 
-            if (empty(static::readFilesInDirectoryGlob($v)) && is_dir($v) && rmdir($v)) {
+            if (empty(static::readFilesInDirectoryRegex($v)) && is_dir($v) && rmdir($v)) {
                 if ($verbose) {
                     echo 'removed ', $v, PHP_EOL;
                 }
@@ -286,14 +313,13 @@ class FileSystem {
         if (static::deleteEmptySubDirectories($d)) {
             rmdir($d);
         } else
-            trigger_error("$d seems to contain non empty folders or something", E_USER_WARNING);
+                trigger_error("$d seems to contain non empty folders or something", E_USER_WARNING);
     }
 
     function array2file($a, $f) {
         foreach ($a as $l) {
             $l = trim($l);
-            if (!empty($l))
-                file_put_contents($f, $l . "\n", FILE_APPEND);
+            if (!empty($l)) file_put_contents($f, $l . "\n", FILE_APPEND);
         }
     }
 
@@ -304,11 +330,9 @@ class FileSystem {
      * @return type
      */
     public static function movefile($from, $to) {
-        if (!is_file($from))
-            return;
+        if (!is_file($from)) return;
         $dir = dirname($to);
-        if (!is_dir($dir))
-            mkdir($dir, '0777', true);
+        if (!is_dir($dir)) mkdir($dir, '0777', true);
         return rename($from, $to);
     }
 
@@ -320,11 +344,9 @@ class FileSystem {
      * @return boolean
      */
     function copyfile($from, $to) {
-        if (!is_file($from))
-            return;
+        if (!is_file($from)) return;
         $dir = dirname($to);
-        if (!is_dir($dir))
-            mkdir($dir, '0777', true);
+        if (!is_dir($dir)) mkdir($dir, '0777', true);
         return copy($from, $to);
     }
 

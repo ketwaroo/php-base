@@ -295,7 +295,7 @@ class Util
      * @param mixed $default 
      * @return mixed
      */
-    public static function dotGet(&$arrayLike, $path, $default = null)
+    public static function dotGet(&$arrayLike, $path, $default = null, $dot='.')
     {
         if (static::arrayKeyExists($path, $arrayLike))
         {
@@ -303,7 +303,7 @@ class Util
         }
 
         $loc = &$arrayLike;
-        foreach (explode('.', $path) as $step)
+        foreach (explode($dot, $path) as $step)
         {
             if (static::arrayKeyExists($step, $loc))
             {
@@ -323,10 +323,10 @@ class Util
         return $loc;
     }
 
-    public static function dotSet(&$arrayLike, $path, $value)
+    public static function dotSet(&$arrayLike, $path, $value, $dot='.')
     {
         $loc = &$arrayLike;
-        foreach (explode('.', $path) as $step)
+        foreach (explode($dot, $path) as $step)
         {
             if (is_array($loc) || $loc instanceof \ArrayAccess)
             {
@@ -427,5 +427,5 @@ class Util
                 , '<?php return ' . var_export($var, true) . ';' . PHP_EOL
         );
     }
-
+    
 }
