@@ -331,9 +331,16 @@ class FileSystem {
      */
     public static function movefile($from, $to) {
         if (!is_file($from)) return;
-        $dir = dirname($to);
-        if (!is_dir($dir)) mkdir($dir, '0777', true);
+        static::prepareDirectory(dirname($to));
+
         return rename($from, $to);
+    }
+
+    public static function prepareDirectory($dir) {
+        if (!is_dir($dir)) {
+            mkdir($dir, '0777', true);
+        }
+        return $dir;
     }
 
     /**
