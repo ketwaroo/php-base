@@ -338,9 +338,37 @@ class FileSystem {
 
     public static function prepareDirectory($dir) {
         if (!is_dir($dir)) {
-            mkdir($dir, 0777, true);
+
+            $dir2 = static::osPath($dir);
+            $p = [];
+            do {
+                if (!is_dir($dir2)) {
+                    array_unshift($p, basename($dir2));
+                } else break;
+            }while ($dir2 = dirname($dir2));
+
+            foreach ($p as $d) {
+                $dir2 = static::osPath($dir2 . '/' . $d);
+                mkdir($dir2);
+                static::copyPermissions(dirname($dir2), $dir2);
+            }
         }
         return $dir;
+    }
+
+    /**
+     * Copy permission.
+     * @param string|array $src either source file or `stat()` output.
+     * @param string $dest
+     */
+    public static function copyPermissions($src, $dest) {
+        if (is_string($src) && file_exists($src)) {
+            $src = stat($src);
+        }
+
+        chmod($dest, $src['mode']);
+        chown($dest, $src['uid']);
+        chgrp($dest, $src['gid']);
     }
 
     /**
