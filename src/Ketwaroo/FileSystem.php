@@ -32,6 +32,7 @@ class FileSystem {
     }
 
     /**
+     * Generally safe filename. If it work on windows, it'll work anywhere.
      * 
      * @link https://docs.microsoft.com/en-us/windows/win32/fileio/naming-a-file
      * @param string $filename
