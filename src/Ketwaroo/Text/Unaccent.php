@@ -1,4 +1,5 @@
 <?php
+
 namespace Ketwaroo\Text;
 
 /**
@@ -61,9 +62,28 @@ class Unaccent {
                     'bsol',
                     'amp',
                     'percnt',
+                    'grave',
                     'colon',
+                    'iexcl',
+                    'iquest',
                 ]
         );
+
+        foreach (
+        [
+            'hellip' => '...',
+            'times' => 'x',
+            'frac14' => '1/4',
+            'half' => '1/2',
+            'frac34' => '3/4',
+        ]
+        as $s => $r
+        ) {
+            if (FALSE !== ($k = array_search($s, $chars, true))) {
+                $chars[$k] = $r;
+            }
+        }
+
         $this->charMapSearch = array_keys($chars);
         $this->charMapReplace = array_values($chars);
     }
