@@ -44,7 +44,7 @@ class FileSystem {
             '~[' . preg_quote('<>"/\\|?*:') . ']+~' => $invalidCharReplacer,
             '~[[:^print:]]+~' => $invalidCharReplacer,
         ];
-        return preg_replace(array_keys($rep), array_values($rep), $filename);
+        return trim(preg_replace(array_keys($rep), array_values($rep), $filename));
     }
 
     /**
@@ -58,7 +58,7 @@ class FileSystem {
         $rep = [
             '~[\.,]+$~' => '',
         ];
-        return preg_replace(array_keys($rep), array_values($rep), static::sanitiseWindowsFileName($filename, $invalidCharReplacer));
+        return trim(preg_replace(array_keys($rep), array_values($rep), static::sanitiseWindowsFileName($filename, $invalidCharReplacer)));
     }
 
     /**
