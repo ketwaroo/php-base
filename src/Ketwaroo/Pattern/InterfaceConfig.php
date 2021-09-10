@@ -11,7 +11,7 @@ namespace Ketwaroo\Pattern;
 /**
  * Description of InterfaceConfig
  *
- * @author Yaasir Ketwaroo<yaasir@ketwaroo.com>
+ * @author Yaasir Ketwaroo
  */
 interface InterfaceConfig
 {

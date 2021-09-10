@@ -7,7 +7,7 @@ use Ketwaroo\Config;
 /**
  * singletom instance of config
  *
- * @author Yaasir Ketwaroo<ketwaroo.yaasir@gmail.com>
+ * @author Yaasir Ketwaroo
  */
 class GlobalRegistry extends Config
 {

@@ -11,7 +11,7 @@ namespace Ketwaroo\Pattern;
 /**
  * Description of TraitDeepClone
  *
- * @author Yaasir Ketwaroo<ketwaroo.yaasir@gmail.com>
+ * @author Yaasir Ketwaroo
  */
 trait TraitDeepClone
 {

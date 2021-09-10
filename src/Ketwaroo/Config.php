@@ -13,7 +13,7 @@ use Ketwaroo\Pattern\InterfaceConfig;
 /**
  * For getting/setting config
  *
- * @author Yaasir Ketwaroo<ketwaroo.yaasir@gmail.com>
+ * @author Yaasir Ketwaroo
  */
 class Config implements InterfaceConfig, \ArrayAccess, \Countable, \Iterator
 {

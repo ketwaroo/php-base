@@ -13,7 +13,7 @@ use Ketwaroo\Text;
 /**
  * Description of Cli
  *
- * @author Yaasir Ketwaroo<ketwaroo.yaasir@gmail.com>
+ * @author Yaasir Ketwaroo
  */
 class CliArg
 {

@@ -5,7 +5,7 @@ namespace Ketwaroo\FileSystem;
 /**
  * Description of File
  *
- * @author Yaasir Ketwaroo<ketwaroo.yaasir@gmail.com>
+ * @author Yaasir Ketwaroo
  */
 class File extends \SplFileObject
 {
