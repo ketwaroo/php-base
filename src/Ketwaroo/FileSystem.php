@@ -364,12 +364,11 @@ class FileSystem {
      */
     public static function copyPermissions($src, $dest) {
         if (is_string($src) && file_exists($src)) {
-            $src = stat($src);
+            $srcStat = stat($src);
+            chmod($dest, $srcStat['mode']);
+            chown($dest, $srcStat['uid']);
+            chgrp($dest, $srcStat['gid']);
         }
-
-        chmod($dest, $src['mode']);
-        chown($dest, $src['uid']);
-        chgrp($dest, $src['gid']);
     }
 
     /**
