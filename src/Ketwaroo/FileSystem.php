@@ -3,6 +3,7 @@
 namespace Ketwaroo;
 
 use Ketwaroo\Text;
+use Ketwaroo\PackageInfo;
 
 /**
  * Description of FileSystem
@@ -195,30 +196,53 @@ class FileSystem {
      * @param type $r
      * @return array
      */
-    public static function readDirectoriesInDirectoryRegex($path, $filter = '/.*/', $r = true) {
-        $dls = array();
-        $subdir = array();
+   public static function readDirectoriesInDirectoryRegex($path, $filter = '/.*/', $r = true, array &$carry = []) {
+
+        $finalSort = empty($carry);
+        $subdir    = array();
         if ($r === 0) return array();
-        if (is_numeric($r)) $r = intval($r) - 1;
+        if (is_numeric($r)) $r         = intval($r) - 1;
 
-
+        $subdirs = [];
         if ($d = opendir($path)) {
-            while (false !== ($f = readdir($d)))
-                if ($f != "." && $f != "..")
-                        if (is_dir($path . '/' . $f)) {
-                        if (preg_match($filter, $f))
-                                array_push($dls, $path . '/' . $f);
+            while (false !== ($f = readdir($d))) {
+                
+                if ($f != "." && $f != "..") {
+                    
+                    if (is_dir($path . '/' . $f)) {
+                        if (!$filter || preg_match($filter, $f)) {
+                            $carry[] = $path . '/' . $f;
+                        }
 
-                        if ($r)
-                                $subdir = array_merge(static::readDirectoriesInDirectoryRegex($path . '/' . $f, $filter, $r), $subdir);
+                        if ($r) {
+                            $subdirs[]=$path . '/' . $f;
+                        }
                     }
+                }
+            }
 
             closedir($d);
         }
-        sort($dls);
-        sort($subdir);
-        return array_merge($dls, $subdir);
+        foreach ($subdirs as $sd) {
+            static::readDirectoriesInDirectoryRegex($sd, $filter, $r, $carry);
+        }
+
+        if ($finalSort) {
+            sort($carry);
+            return $carry;
+        }
+       return [];
     }
+    
+    public static function recursiveDirectoryIterator($directory,$filter = '/.*/'){
+        
+        $r = new \RecursiveDirectoryIterator($directory);
+        $filter = new \RecursiveRegexIterator($r, $filter);
+        
+ 
+        
+    }
+    
 
     /*
       Function: move
@@ -411,21 +435,20 @@ class FileSystem {
      * @return type
      */
     public static function determineMime($file, $default = 'application/octet-stream') {
-
-        $basePath = Package::detectPackageBasePath(Package::inWhichPackageAmI(__FILE__));
-
         if (is_file($file) && function_exists('finfo_open')) { // recommended way.
             $finfo = finfo_open(FILEINFO_MIME_TYPE); // return mime type a la mimetype extension
-            $mime = finfo_file($finfo, $file);
+            $mime  = finfo_file($finfo, $file);
             finfo_close($finfo);
         }
 //        elseif(is_file($file) && function_exists('mime_content_type')) // deprecated way
 //        {
 //            $mime = @mime_content_type($file);
 //        }
-        else { // scraping the barrel. Also works if file does not exist. //@todo this method may be more accurate than fileinfo.
+        else {
+            // scraping the barrel. Also works if file does not exist. //@todo this method may be more accurate than fileinfo.
+            $basePath = PackageInfo::whereAmI(__FILE__)->getPackageBasePath();
             if (empty(self::$extMimeMap)) {
-                self::$extMimeMap = require($basePath . '/data/mime_by_extension.php');
+                self::$extMimeMap = require($basePath . '/data/mime-by-extension.php');
             }
 
             $ext = pathinfo($file, PATHINFO_EXTENSION);
