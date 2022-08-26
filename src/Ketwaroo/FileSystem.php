@@ -435,19 +435,18 @@ class FileSystem {
      * @return type
      */
     public static function determineMime($file, $default = 'application/octet-stream') {
-        if (is_file($file) && function_exists('finfo_open')) { // recommended way.
-            $finfo = finfo_open(FILEINFO_MIME_TYPE); // return mime type a la mimetype extension
-            $mime  = finfo_file($finfo, $file);
-            finfo_close($finfo);
+        if (
+            (is_file($file) || is_resource($file))
+            && function_exists('mime_content_type')
+            && false !== ($mime = mime_content_type($file))
+        ) {
+            return $mime;
         }
-//        elseif(is_file($file) && function_exists('mime_content_type')) // deprecated way
-//        {
-//            $mime = @mime_content_type($file);
-//        }
         else {
-            // scraping the barrel. Also works if file does not exist. //@todo this method may be more accurate than fileinfo.
-            $basePath = PackageInfo::whereAmI(__FILE__)->getPackageBasePath();
+
             if (empty(self::$extMimeMap)) {
+                // scraping the barrel. Also works if file does not exist. //@todo this method may be more accurate than fileinfo.
+                $basePath         = PackageInfo::whereAmI(__FILE__)->getPackageBasePath();
                 self::$extMimeMap = require($basePath . '/data/mime-by-extension.php');
             }
 
