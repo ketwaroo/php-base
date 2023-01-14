@@ -12,17 +12,17 @@ use Ketwaroo\PackageInfo;
  */
 class FileSystem {
 
-    const FILTER_REGEX = 0;
+    const FILTER_REGEX         = 0;
     const FILTER_REGEX_DEFAULT = '~^.*$~';
-    const FILTER_GLOB = 1;
-    const FILTER_GLOB_DEFAULT = '*';
+    const FILTER_GLOB          = 1;
+    const FILTER_GLOB_DEFAULT  = '*';
 
     public static function osPath($path) {
 
         $r = [
-            '/' => DIRECTORY_SEPARATOR,
+            '/'  => DIRECTORY_SEPARATOR,
             '\\' => DIRECTORY_SEPARATOR,
-            '?' => '\?',
+            '?'  => '\?',
         ];
         return str_replace(array_keys($r), array_values($r), $path);
     }
@@ -43,7 +43,7 @@ class FileSystem {
     public static function sanitiseWindowsFileName($filename, $invalidCharReplacer = '-') {
         $rep = [
             '~[' . preg_quote('<>"/\\|?*:') . ']+~' => $invalidCharReplacer,
-            '~[[:^print:]]+~' => $invalidCharReplacer,
+            '~[[:^print:]]+~'                       => $invalidCharReplacer,
         ];
         return trim(preg_replace(array_keys($rep), array_values($rep), $filename));
     }
@@ -117,7 +117,7 @@ class FileSystem {
 //        sort($fs);
 //        return $fs;
 
-        $dls = array();
+        $dls    = array();
         $subdir = array();
 
         if (FALSE !== ($d = opendir($path))) {
@@ -127,8 +127,8 @@ class FileSystem {
                         if ($recursive && is_int($recursive)) --$recursive;
 
                         $subdir = array_merge(static::readFilesInDirectoryRegex($path . '/' . $f, $filter, $recursive), $subdir);
-                    } elseif (NULL === $filter || preg_match($filter, $f))
-                            array_push($dls, $path . '/' . $f);
+                    }
+                    elseif (NULL === $filter || preg_match($filter, $f)) array_push($dls, $path . '/' . $f);
                 }
             }
 
@@ -149,9 +149,9 @@ class FileSystem {
      */
     public static function readFilesInDirectoryGlob($path, $filter = NULL, $r = true) {
         $filter = (NULL === $filter) ? static::FILTER_GLOB_DEFAULT : $filter;
-        $path = static::escapeGlobPath($path);
-        $dirs = glob($path . '/*', GLOB_ONLYDIR);
-        $files = array_diff(glob($path . '/' . $filter, GLOB_BRACE), $dirs);
+        $path   = static::escapeGlobPath($path);
+        $dirs   = glob($path . '/*', GLOB_ONLYDIR);
+        $files  = array_diff(glob($path . '/' . $filter, GLOB_BRACE), $dirs);
 
         if (!empty($r)) {
             if ($r && is_int($r)) {
@@ -182,8 +182,7 @@ class FileSystem {
             if ($recurse && is_int($recurse)) --$recurse;
 
             $subdirs = glob($path . '/*', GLOB_ONLYDIR); //*/
-            foreach ($subdirs as $d)
-                $dirs = array_merge($dirs, static::readDirectoriesInDirectoryGlob($d, $filter, $recurse));
+            foreach ($subdirs as $d) $dirs    = array_merge($dirs, static::readDirectoriesInDirectoryGlob($d, $filter, $recurse));
         }
 
         return $dirs;
@@ -196,7 +195,7 @@ class FileSystem {
      * @param type $r
      * @return array
      */
-   public static function readDirectoriesInDirectoryRegex($path, $filter = '/.*/', $r = true, array &$carry = []) {
+    public static function readDirectoriesInDirectoryRegex($path, $filter = '/.*/', $r = true, array &$carry = []) {
 
         $finalSort = empty($carry);
         $subdir    = array();
@@ -204,18 +203,18 @@ class FileSystem {
         if (is_numeric($r)) $r         = intval($r) - 1;
 
         $subdirs = [];
-        if ($d = opendir($path)) {
+        if ($d       = opendir($path)) {
             while (false !== ($f = readdir($d))) {
-                
+
                 if ($f != "." && $f != "..") {
-                    
+
                     if (is_dir($path . '/' . $f)) {
                         if (!$filter || preg_match($filter, $f)) {
                             $carry[] = $path . '/' . $f;
                         }
 
                         if ($r) {
-                            $subdirs[]=$path . '/' . $f;
+                            $subdirs[] = $path . '/' . $f;
                         }
                     }
                 }
@@ -231,18 +230,63 @@ class FileSystem {
             sort($carry);
             return $carry;
         }
-       return [];
+        return [];
     }
-    
-    public static function recursiveDirectoryIterator($directory,$filter = '/.*/'){
-        
-        $r = new \RecursiveDirectoryIterator($directory);
-        $filter = new \RecursiveRegexIterator($r, $filter);
-        
- 
-        
+
+    /**
+     * Get files and folders within directory
+     * 
+     * @param type $directory
+     * @param \RecursiveRegexIterator $filter
+     * @return \RecursiveIteratorIterator|\SplFileInfo iterator of SplFileInfo
+     */
+    public static function recursiveIterator($directory, $filter = '/.*/') {
+
+        $r        = new \RecursiveDirectoryIterator($directory, \FilesystemIterator::KEY_AS_PATHNAME | \FilesystemIterator::CURRENT_AS_FILEINFO | \FilesystemIterator::SKIP_DOTS);
+        $filtered = new \RegexIterator(
+            new \RecursiveIteratorIterator($r),
+            $filter
+        );
+
+        return $filtered;
     }
-    
+
+    /**
+     * Get files only within directory
+     * 
+     * @param type $directory
+     * @param \RecursiveRegexIterator $filter
+     * @param mixed $depth boolean true = no limit, int= limit, 0/false = first level only.
+     * @return \RecursiveIteratorIterator|\SplFileInfo[] iterator of SplFileInfo
+     */
+    public static function recursiveFilesOnlyIterator($directory, $filter = '/.*/', $depth=true) {
+
+        $r        = new \RecursiveDirectoryIterator($directory, \FilesystemIterator::KEY_AS_PATHNAME | \FilesystemIterator::CURRENT_AS_FILEINFO | \FilesystemIterator::SKIP_DOTS);
+        $filtered = new FileSystem\FilesOnlyRegexIterator(
+            new \RecursiveIteratorIterator($r),
+            $filter
+        );
+
+        return $filtered;
+    }
+
+    /**
+     * Get files only within directory
+     * 
+     * @param type $directory
+     * @param \RecursiveRegexIterator $filter
+     * @return \RecursiveIteratorIterator|\SplFileInfo[] iterator of SplFileInfo
+     */
+    public static function recursiveDirectoriesOnlyIterator($directory, $filter = '/.*/') {
+
+        $r        = new \RecursiveDirectoryIterator($directory, \FilesystemIterator::KEY_AS_PATHNAME | \FilesystemIterator::CURRENT_AS_FILEINFO | \FilesystemIterator::SKIP_DOTS);
+        $filtered = new FileSystem\DirectoriesOnlyRegexIterator(
+            new \RecursiveIteratorIterator($r),
+            $filter
+        );
+
+        return $filtered;
+    }
 
     /*
       Function: move
@@ -294,8 +338,7 @@ class FileSystem {
         $list = rd($from, $filter);
         foreach ($list as $tmp) {
             $tmp2 = str_fromto($from, $to, $tmp);
-            if (!file_exists($tmp2) && copyfile($tmp, $tmp2))
-                    echo 'copied ', $tmp, "\n";
+            if (!file_exists($tmp2) && copyfile($tmp, $tmp2)) echo 'copied ', $tmp, "\n";
         }
     }
 
@@ -311,10 +354,10 @@ class FileSystem {
     }
 
     public static function deleteEmptySubDirectories($from, $verbose = false) {
-        $list = static::readDirectoriesInDirectoryRegex($from);
+        $list    = static::readDirectoriesInDirectoryRegex($from);
         rsort($list);
         $numDirs = count($list);
-        while ($v = array_pop($list)) {
+        while ($v       = array_pop($list)) {
 
             if (empty(static::readFilesInDirectoryRegex($v)) && is_dir($v) && rmdir($v)) {
                 if ($verbose) {
@@ -337,8 +380,8 @@ class FileSystem {
         }
         if (static::deleteEmptySubDirectories($d)) {
             rmdir($d);
-        } else
-                trigger_error("$d seems to contain non empty folders or something", E_USER_WARNING);
+        }
+        else trigger_error("$d seems to contain non empty folders or something", E_USER_WARNING);
     }
 
     function array2file($a, $f) {
@@ -365,11 +408,12 @@ class FileSystem {
         if (!is_dir($dir)) {
 
             $dir2 = static::osPath($dir);
-            $p = [];
+            $p    = [];
             do {
                 if (!is_dir($dir2)) {
                     array_unshift($p, basename($dir2));
-                } else break;
+                }
+                else break;
             }while ($dir2 = dirname($dir2));
 
             foreach ($p as $d) {
@@ -464,12 +508,12 @@ class FileSystem {
     public static function refreshMimeMap() {
         $basePath = Package::detectPackageBasePath(Package::inWhichPackageAmI(__FILE__));
 
-        $src = 'http://svn.apache.org/viewvc/httpd/httpd/trunk/docs/conf/mime.types?view=co';
+        $src     = 'http://svn.apache.org/viewvc/httpd/httpd/trunk/docs/conf/mime.types?view=co';
         $outfile = $basePath . '/data/mime_by_extension.php';
 
         $raw = explode("\n", file_get_contents($src));
 
-        $out = array();
+        $out   = array();
         $count = array();
 
         foreach ($raw as $r) {
@@ -486,8 +530,9 @@ class FileSystem {
                 foreach ($exts as $e) {
                     if (isset($out[$e])) {
                         $out[$e][] = $mime;
-                        $count[$e] ++;
-                    } else {
+                        $count[$e]++;
+                    }
+                    else {
                         $out[$e] = array(
                             $mime,
                         );

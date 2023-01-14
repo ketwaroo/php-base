@@ -11,8 +11,7 @@ namespace Ketwaroo;
  * 
  * Sould have no other dependencies.
  */
-class Text
-{
+class Text {
 
     const trim_default_chars = " \t\n\r\x00\x0B";
     const trim_left          = "left";
@@ -25,9 +24,8 @@ class Text
      * @param string $str
      * @return string kebab-case-string
      */
-    public static function toKebabCase($str)
-    {
-        return static::toLowerCaseJoined($str, '-');
+    public static function toKebabCase($str) {
+        return static::trim(static::toLowerCaseJoined($str, '-'), '-');
     }
 
     /**
@@ -36,9 +34,8 @@ class Text
      * @param string $str
      * @return string snake_case_string
      */
-    public static function toSnakeCase($str)
-    {
-        return static::toLowerCaseJoined($str, '_');
+    public static function toSnakeCase($str) {
+        return static::trim(static::toLowerCaseJoined($str, '_'), '_');
     }
 
     /**
@@ -47,13 +44,11 @@ class Text
      * @param type $str
      * @return string camelCaseString
      */
-    public static function toCamelCase($str)
-    {
+    public static function toCamelCase($str) {
         return lcfirst(static::toUpperCaseJoined($str, ''));
     }
 
-    public static function toStudlyCaps($str)
-    {
+    public static function toStudlyCaps($str) {
         return static::toUpperCaseJoined($str, '');
     }
 
@@ -63,8 +58,7 @@ class Text
      * @param string $glu if joined by another string
      * @return string
      */
-    public static function toUpperCaseJoined($str, $glu = '')
-    {
+    public static function toUpperCaseJoined($str, $glu = '') {
         return str_replace(' ', $glu, ucwords(static::toLowerCaseJoined($str, ' ')));
     }
 
@@ -75,14 +69,13 @@ class Text
      * @param string $glu if joined by another string
      * @return string lower-dash-string
      */
-    public static function toLowerCaseJoined($str, $glu = ' ')
-    {
+    public static function toLowerCaseJoined($str, $glu = ' ') {
         return strtolower(
             preg_replace(
                 [
-            '~([a-z])([A-Z])~', // split camel case
-            '~[^a-z0-9 ]+~i',
-            '~ +~',
+                    '~([a-z])([A-Z])~', // split camel case
+                    '~[^a-z0-9 ]+~i',
+                    '~ +~',
                 ]
                 , [
             '$1 $2',
@@ -100,43 +93,37 @@ class Text
      * @param $str input string
      * @return string input string without accent
      */
-    public static function unaccent($str)
-    {
+    public static function unaccent($str) {
         $encoding = mb_detect_encoding($str);
 
         return iconv($encoding, 'ASCII//TRANSLIT', $str);
     }
 
-    public static function trim($string, $charMask = null, $addDefaultMask = false, $direction = null)
-    {
-        if ($addDefaultMask || null === $charMask)
-        {
+    public static function trim($string, $charMask = null, $addDefaultMask = false, $direction = null) {
+        if ($addDefaultMask || null === $charMask) {
             $charMask = strval($charMask) . self:: trim_default_chars;
         }
 
-        switch ($direction)
-        {
+        switch ($direction) {
             default:
             case null:
             case self::trim_both:
-                return trim($string, $charMask);
+                return trim((string) $string, $charMask);
                 break;
             case self::trim_left:
-                return ltrim($string, $charMask);
+                return ltrim((string) $string, $charMask);
                 break;
             case self::trim_right:
-                return rtrim($string, $charMask);
+                return rtrim((string) $string, $charMask);
                 break;
         }
     }
 
-    public static function ltrim($string, $charMask = '', $addDefaultMask = false)
-    {
+    public static function ltrim($string, $charMask = '', $addDefaultMask = false) {
         return static::trim($string, $charMask, $addDefaultMask, static::trim_left);
     }
 
-    public static function rtrim($string, $charMask = '', $addDefaultMask = false)
-    {
+    public static function rtrim($string, $charMask = '', $addDefaultMask = false) {
         return static::trim($string, $charMask, $addDefaultMask, static::trim_right);
     }
 
