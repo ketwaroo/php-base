@@ -11,7 +11,7 @@ class Json {
     }
 
     public static function writeJsonFile(string $filename, array $data = []) {
-        return FileSystem::writeFileExclusive($filename, static::jsonEnc($data));
+        return FileSystem::writeFileExclusive($filename, static::encode($data));
     }
     
     public static function encode(mixed $data):string {
