@@ -91,6 +91,40 @@ class Util
 
         return $first;
     }
+    
+    /**
+     * 
+     * @param callable $map callable($value,$key), return value.
+     * @param array $input
+     * @param array $output
+     * @return array
+     */
+    public static function arrayMap(callable $map, array &$input, array &$output = []): array {
+
+        foreach ($input as $k => $v) {
+
+            $v          = $map($v, $k);
+            $output[$k] = $v;
+        }
+        return $output;
+    }
+    
+    /**
+     * 
+     * @param callable $map callable($key), return altered key, sets existing value to new key.
+     * @param array $input
+     * @param array $output
+     * @return array
+     */
+    public static function arrayMapKey(callable $map, array &$input, array &$output = []): array {
+
+        foreach ($input as $k => $v) {
+            
+            $newk =  $map($k);
+            $output[$newk] = $v;
+        }
+        return $output;
+    }
 
     /**
      * Test if is array or implements all array like functionality.
@@ -132,6 +166,18 @@ class Util
         }
 
         return false;
+    }
+    
+    /**
+     * Simple test for an associative array
+     *
+     * @link http://stackoverflow.com/questions/173400/how-to-check-if-php-array-is-associative-or-sequential
+     *
+     * @param array $array
+     * @return bool
+     */
+    public static function isAssocativeArray(array $array) {
+        return array_keys($array) !== range(0, count($array) - 1);
     }
 
     /**

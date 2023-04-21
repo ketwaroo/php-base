@@ -25,7 +25,7 @@ trait TraitSingleton
     /**
      * @return static|$this
      */
-    public static function instance()
+    public static function instance():static
     {
 
         if (null === static::$instance)

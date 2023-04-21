@@ -94,9 +94,7 @@ class Text {
      * @return string input string without accent
      */
     public static function unaccent($str) {
-        $encoding = mb_detect_encoding($str);
-
-        return iconv($encoding, 'ASCII//TRANSLIT', $str);
+        return Text\Unaccent::instance()->unaccent($str);
     }
 
     public static function trim($string, $charMask = null, $addDefaultMask = false, $direction = null) {

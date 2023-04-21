@@ -259,7 +259,7 @@ class FileSystem {
      * @param mixed $depth boolean true = no limit, int= limit, 0/false = first level only.
      * @return \RecursiveIteratorIterator|\SplFileInfo[] iterator of SplFileInfo
      */
-    public static function recursiveFilesOnlyIterator($directory, $filter = '/.*/', $depth=true) {
+    public static function recursiveFilesOnlyIterator($directory, $filter = '/.*/', $depth = true) {
 
         $r        = new \RecursiveDirectoryIterator($directory, \FilesystemIterator::KEY_AS_PATHNAME | \FilesystemIterator::CURRENT_AS_FILEINFO | \FilesystemIterator::SKIP_DOTS);
         $filtered = new FileSystem\FilesOnlyRegexIterator(
@@ -366,7 +366,7 @@ class FileSystem {
                 $numDirs--;
             }
         }
-        return empty($numDirs);
+        return $numDirs <= 0;
     }
 
     /**
@@ -419,7 +419,7 @@ class FileSystem {
             foreach ($p as $d) {
                 $dir2 = static::osPath($dir2 . '/' . $d);
                 mkdir($dir2);
-                static::copyPermissions(dirname($dir2), $dir2);
+                @static::copyPermissions(dirname($dir2), $dir2);
             }
         }
         return $dir;
@@ -554,6 +554,45 @@ class FileSystem {
 
     public static function escapeGlobPath($path) {
         return preg_replace('~([\*\?\[\]\-\! ])~', '\\\$1', $path);
+    }
+
+    public static function readFileExclusive(string $filename): string|bool {
+        $fp = fopen($filename, 'r');
+        if (flock($fp, LOCK_EX)) {
+
+            $contents = stream_get_contents($fp);
+
+            flock($fp, LOCK_UN);
+            fclose($fp);
+            return $contents;
+        }
+        else return false;
+    }
+
+    /**
+     * 
+     * @param string $filename
+     * @param string $data
+     * @return int|bool
+     */
+    public static function writeFileExclusive(string $filename, string $data): int|bool {
+        static::prepareDirectory(dirname($filename));
+        $fp = fopen($filename, 'c');
+
+        $contentLength = 0;
+        if (flock($fp, LOCK_EX)) {
+
+            ftruncate($fp, strlen($data));
+            rewind($fp);
+            $contentLength += fwrite($fp, $data);
+
+            flock($fp, LOCK_UN);
+            fclose($fp);
+        }
+        else {
+            return false;
+        }
+        return $contentLength;
     }
 
 }
