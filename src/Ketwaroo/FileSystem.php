@@ -12,17 +12,17 @@ use Ketwaroo\PackageInfo;
  */
 class FileSystem {
 
-    const FILTER_REGEX         = 0;
+    const FILTER_REGEX = 0;
     const FILTER_REGEX_DEFAULT = '~^.*$~';
-    const FILTER_GLOB          = 1;
-    const FILTER_GLOB_DEFAULT  = '*';
+    const FILTER_GLOB = 1;
+    const FILTER_GLOB_DEFAULT = '*';
 
     public static function osPath($path) {
 
         $r = [
-            '/'  => DIRECTORY_SEPARATOR,
+            '/' => DIRECTORY_SEPARATOR,
             '\\' => DIRECTORY_SEPARATOR,
-            '?'  => '\?',
+            '?' => '\?',
         ];
         return str_replace(array_keys($r), array_values($r), $path);
     }
@@ -43,7 +43,7 @@ class FileSystem {
     public static function sanitiseWindowsFileName($filename, $invalidCharReplacer = '-') {
         $rep = [
             '~[' . preg_quote('<>"/\\|?*:') . ']+~' => $invalidCharReplacer,
-            '~[[:^print:]]+~'                       => $invalidCharReplacer,
+            '~[[:^print:]]+~' => $invalidCharReplacer,
         ];
         return trim(preg_replace(array_keys($rep), array_values($rep), $filename));
     }
@@ -117,18 +117,19 @@ class FileSystem {
 //        sort($fs);
 //        return $fs;
 
-        $dls    = array();
+        $dls = array();
         $subdir = array();
 
         if (FALSE !== ($d = opendir($path))) {
             while (false !== ($f = readdir($d))) {
                 if ($f != "." && $f != "..") {
                     if (is_dir($path . '/' . $f) && !empty($recursive)) {
-                        if ($recursive && is_int($recursive)) --$recursive;
+                        if ($recursive && is_int($recursive))
+                            --$recursive;
 
                         $subdir = array_merge(static::readFilesInDirectoryRegex($path . '/' . $f, $filter, $recursive), $subdir);
-                    }
-                    elseif (NULL === $filter || preg_match($filter, $f)) array_push($dls, $path . '/' . $f);
+                    } elseif (NULL === $filter || preg_match($filter, $f))
+                        array_push($dls, $path . '/' . $f);
                 }
             }
 
@@ -149,9 +150,9 @@ class FileSystem {
      */
     public static function readFilesInDirectoryGlob($path, $filter = NULL, $r = true) {
         $filter = (NULL === $filter) ? static::FILTER_GLOB_DEFAULT : $filter;
-        $path   = static::escapeGlobPath($path);
-        $dirs   = glob($path . '/*', GLOB_ONLYDIR);
-        $files  = array_diff(glob($path . '/' . $filter, GLOB_BRACE), $dirs);
+        $path = static::escapeGlobPath($path);
+        $dirs = glob($path . '/*', GLOB_ONLYDIR);
+        $files = array_diff(glob($path . '/' . $filter, GLOB_BRACE), $dirs);
 
         if (!empty($r)) {
             if ($r && is_int($r)) {
@@ -179,10 +180,12 @@ class FileSystem {
         $dirs = glob($path . '/' . $filter, GLOB_BRACE | GLOB_ONLYDIR);
 
         if (!empty($recurse)) {
-            if ($recurse && is_int($recurse)) --$recurse;
+            if ($recurse && is_int($recurse))
+                --$recurse;
 
             $subdirs = glob($path . '/*', GLOB_ONLYDIR); //*/
-            foreach ($subdirs as $d) $dirs    = array_merge($dirs, static::readDirectoriesInDirectoryGlob($d, $filter, $recurse));
+            foreach ($subdirs as $d)
+                $dirs = array_merge($dirs, static::readDirectoriesInDirectoryGlob($d, $filter, $recurse));
         }
 
         return $dirs;
@@ -198,12 +201,14 @@ class FileSystem {
     public static function readDirectoriesInDirectoryRegex($path, $filter = '/.*/', $r = true, array &$carry = []) {
 
         $finalSort = empty($carry);
-        $subdir    = array();
-        if ($r === 0) return array();
-        if (is_numeric($r)) $r         = intval($r) - 1;
+        $subdir = array();
+        if ($r === 0)
+            return array();
+        if (is_numeric($r))
+            $r = intval($r) - 1;
 
         $subdirs = [];
-        if ($d       = opendir($path)) {
+        if ($d = opendir($path)) {
             while (false !== ($f = readdir($d))) {
 
                 if ($f != "." && $f != "..") {
@@ -242,10 +247,10 @@ class FileSystem {
      */
     public static function recursiveIterator($directory, $filter = '/.*/') {
 
-        $r        = new \RecursiveDirectoryIterator($directory, \FilesystemIterator::KEY_AS_PATHNAME | \FilesystemIterator::CURRENT_AS_FILEINFO | \FilesystemIterator::SKIP_DOTS);
+        $r = new \RecursiveDirectoryIterator($directory, \FilesystemIterator::KEY_AS_PATHNAME | \FilesystemIterator::CURRENT_AS_FILEINFO | \FilesystemIterator::SKIP_DOTS);
         $filtered = new \RegexIterator(
-            new \RecursiveIteratorIterator($r),
-            $filter
+                new \RecursiveIteratorIterator($r),
+                $filter
         );
 
         return $filtered;
@@ -261,10 +266,10 @@ class FileSystem {
      */
     public static function recursiveFilesOnlyIterator($directory, $filter = '/.*/', $depth = true) {
 
-        $r        = new \RecursiveDirectoryIterator($directory, \FilesystemIterator::KEY_AS_PATHNAME | \FilesystemIterator::CURRENT_AS_FILEINFO | \FilesystemIterator::SKIP_DOTS);
+        $r = new \RecursiveDirectoryIterator($directory, \FilesystemIterator::KEY_AS_PATHNAME | \FilesystemIterator::CURRENT_AS_FILEINFO | \FilesystemIterator::SKIP_DOTS);
         $filtered = new FileSystem\FilesOnlyRegexIterator(
-            new \RecursiveIteratorIterator($r),
-            $filter
+                new \RecursiveIteratorIterator($r),
+                $filter
         );
 
         return $filtered;
@@ -279,10 +284,10 @@ class FileSystem {
      */
     public static function recursiveDirectoriesOnlyIterator($directory, $filter = '/.*/') {
 
-        $r        = new \RecursiveDirectoryIterator($directory, \FilesystemIterator::KEY_AS_PATHNAME | \FilesystemIterator::CURRENT_AS_FILEINFO | \FilesystemIterator::SKIP_DOTS);
+        $r = new \RecursiveDirectoryIterator($directory, \FilesystemIterator::KEY_AS_PATHNAME | \FilesystemIterator::CURRENT_AS_FILEINFO | \FilesystemIterator::SKIP_DOTS);
         $filtered = new FileSystem\DirectoriesOnlyRegexIterator(
-            new \RecursiveIteratorIterator($r),
-            $filter
+                new \RecursiveIteratorIterator($r),
+                $filter
         );
 
         return $filtered;
@@ -330,7 +335,8 @@ class FileSystem {
         $list = rd($from, $filter);
         foreach ($list as $tmp) {
             $tmp2 = str_fromto($from, $to, $tmp);
-            if (copyfile($tmp, $tmp2) && $verbose) echo 'copied ', $tmp, "\n";
+            if (copyfile($tmp, $tmp2) && $verbose)
+                echo 'copied ', $tmp, "\n";
         }
     }
 
@@ -338,7 +344,8 @@ class FileSystem {
         $list = rd($from, $filter);
         foreach ($list as $tmp) {
             $tmp2 = str_fromto($from, $to, $tmp);
-            if (!file_exists($tmp2) && copyfile($tmp, $tmp2)) echo 'copied ', $tmp, "\n";
+            if (!file_exists($tmp2) && copyfile($tmp, $tmp2))
+                echo 'copied ', $tmp, "\n";
         }
     }
 
@@ -354,10 +361,10 @@ class FileSystem {
     }
 
     public static function deleteEmptySubDirectories($from, $verbose = false) {
-        $list    = static::readDirectoriesInDirectoryRegex($from);
+        $list = static::readDirectoriesInDirectoryRegex($from);
         rsort($list);
         $numDirs = count($list);
-        while ($v       = array_pop($list)) {
+        while ($v = array_pop($list)) {
 
             if (empty(static::readFilesInDirectoryRegex($v)) && is_dir($v) && rmdir($v)) {
                 if ($verbose) {
@@ -380,14 +387,15 @@ class FileSystem {
         }
         if (static::deleteEmptySubDirectories($d)) {
             rmdir($d);
-        }
-        else trigger_error("$d seems to contain non empty folders or something", E_USER_WARNING);
+        } else
+            trigger_error("$d seems to contain non empty folders or something", E_USER_WARNING);
     }
 
     function array2file($a, $f) {
         foreach ($a as $l) {
             $l = trim($l);
-            if (!empty($l)) file_put_contents($f, $l . "\n", FILE_APPEND);
+            if (!empty($l))
+                file_put_contents($f, $l . "\n", FILE_APPEND);
         }
     }
 
@@ -398,22 +406,23 @@ class FileSystem {
      * @return type
      */
     public static function movefile($from, $to) {
-        if (!is_file($from)) return;
+        if (!is_file($from))
+            return;
         static::prepareDirectory(dirname($to));
 
         return rename($from, $to);
     }
 
-    public static function prepareDirectory($dir) {
+    public static function prepareDirectory($dir): string {
         if (!is_dir($dir)) {
 
             $dir2 = static::osPath($dir);
-            $p    = [];
+            $p = [];
             do {
                 if (!is_dir($dir2)) {
                     array_unshift($p, basename($dir2));
-                }
-                else break;
+                } else
+                    break;
             }while ($dir2 = dirname($dir2));
 
             foreach ($p as $d) {
@@ -422,7 +431,7 @@ class FileSystem {
                 @static::copyPermissions(dirname($dir2), $dir2);
             }
         }
-        return $dir;
+        return static::osPath($dir);
     }
 
     /**
@@ -447,9 +456,11 @@ class FileSystem {
      * @return boolean
      */
     function copyfile($from, $to) {
-        if (!is_file($from)) return;
+        if (!is_file($from))
+            return;
         $dir = dirname($to);
-        if (!is_dir($dir)) mkdir($dir, '0777', true);
+        if (!is_dir($dir))
+            mkdir($dir, '0777', true);
         return copy($from, $to);
     }
 
@@ -480,17 +491,14 @@ class FileSystem {
      */
     public static function determineMime($file, $default = 'application/octet-stream') {
         if (
-            (is_file($file) || is_resource($file))
-            && function_exists('mime_content_type')
-            && false !== ($mime = mime_content_type($file))
+                (is_file($file) || is_resource($file)) && function_exists('mime_content_type') && false !== ($mime = mime_content_type($file))
         ) {
             return $mime;
-        }
-        else {
+        } else {
 
             if (empty(self::$extMimeMap)) {
                 // scraping the barrel. Also works if file does not exist. //@todo this method may be more accurate than fileinfo.
-                $basePath         = PackageInfo::whereAmI(__FILE__)->getPackageBasePath();
+                $basePath = PackageInfo::whereAmI(__FILE__)->getPackageBasePath();
                 self::$extMimeMap = require($basePath . '/data/mime-by-extension.php');
             }
 
@@ -508,12 +516,12 @@ class FileSystem {
     public static function refreshMimeMap() {
         $basePath = Package::detectPackageBasePath(Package::inWhichPackageAmI(__FILE__));
 
-        $src     = 'http://svn.apache.org/viewvc/httpd/httpd/trunk/docs/conf/mime.types?view=co';
+        $src = 'http://svn.apache.org/viewvc/httpd/httpd/trunk/docs/conf/mime.types?view=co';
         $outfile = $basePath . '/data/mime_by_extension.php';
 
         $raw = explode("\n", file_get_contents($src));
 
-        $out   = array();
+        $out = array();
         $count = array();
 
         foreach ($raw as $r) {
@@ -531,8 +539,7 @@ class FileSystem {
                     if (isset($out[$e])) {
                         $out[$e][] = $mime;
                         $count[$e]++;
-                    }
-                    else {
+                    } else {
                         $out[$e] = array(
                             $mime,
                         );
@@ -565,8 +572,8 @@ class FileSystem {
             flock($fp, LOCK_UN);
             fclose($fp);
             return $contents;
-        }
-        else return false;
+        } else
+            return false;
     }
 
     /**
@@ -588,8 +595,7 @@ class FileSystem {
 
             flock($fp, LOCK_UN);
             fclose($fp);
-        }
-        else {
+        } else {
             return false;
         }
         return $contentLength;
